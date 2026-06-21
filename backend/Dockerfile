@@ -10,6 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# craft-text-detector must be installed --no-deps to avoid its numpy==1.21.2 pin
+# which is incompatible with Python 3.10+
+RUN pip install --no-cache-dir --no-deps craft-text-detector
+
 # Download spaCy model at build time
 RUN python -m spacy download en_core_web_sm
 
