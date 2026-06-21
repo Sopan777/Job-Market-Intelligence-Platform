@@ -8,7 +8,9 @@ sentence-transformers>=2.7.0
 umap-learn>=0.5.0
 hdbscan>=0.8.29
 prophet>=1.1.0
-streamlit>=1.30.0
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
 plotly>=5.18.0
 tqdm>=4.64.0
 python-dotenv>=1.0.0
@@ -17,5 +19,11 @@ tenacity>=8.2.0
 pyarrow>=14.0.0
 faker>=20.0.0
 pdfminer.six>=20221105
+pypdf>=4.0.0
+pymupdf>=1.24.0
+easyocr>=1.7.0
+craft-text-detector
+opencv-python-headless>=4.5.4.62
+gdown
 python-docx>=1.1.0
 statsmodels>=0.14.0

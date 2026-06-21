@@ -1,0 +1,13 @@
+{
+  "name": "job-market-intelligence",
+  "private": true,
+  "scripts": {
+    "dev:api": "cd backend && uvicorn api.main:app --reload --port 8001",
+    "dev:web": "npm --prefix frontend run dev",
+    "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
+    "build": "npm --prefix frontend run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
