@@ -10,3 +10,7 @@ node_modules/
 frontend/node_modules/
 frontend/dist/
 .pytest_cache/
+# Allow bundled data for Railway deployment
+!backend/data/
+!backend/data/processed/
+!backend/data/processed/*.parquet
