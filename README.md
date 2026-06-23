@@ -23,23 +23,27 @@ resume skill gaps — surfaced in a React web app with a FastAPI backend.
 ## Quick start (mock data, no API keys needed)
 
 ```bash
-# 1. Create and activate a virtual environment
+# 1. Clone the repo
+git clone https://github.com/Sopan777/Job-Market-Intelligence-Platform.git
+cd Job-Market-Intelligence-Platform
+
+# 2. Create and activate a virtual environment
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # macOS / Linux
 
-# 2. Install Python dependencies
-pip install -r requirements.txt
+# 3. Install Python dependencies
+pip install -r backend/requirements.txt
 python -m spacy download en_core_web_sm
 
-# 3. Install Node dependencies
+# 4. Install Node dependencies
 npm install
-npm --prefix web install
+npm --prefix frontend install
 
-# 4. Run the full pipeline with 500 synthetic jobs
-python pipeline.py --all --mock --max-jobs 500
+# 5. Run the full pipeline with 500 synthetic jobs
+cd backend && python pipeline.py --all --mock --max-jobs 500 && cd ..
 
-# 5. Start the app (API + frontend together)
+# 6. Start the app (API + frontend together)
 npm run dev
 ```
 
@@ -50,18 +54,20 @@ Open [http://localhost:5173](http://localhost:5173).
 ## Quick start (real data)
 
 ```bash
-# 1. Copy and fill in your credentials
-cp .env.example .env
+# 1. Clone and set up (same as above steps 1-4)
+
+# 2. Copy and fill in your credentials
+cp backend/.env.example .env
 # Edit .env with your Adzuna keys (free at https://developer.adzuna.com/)
 
-# 2. Scrape up to 10,000 jobs
+# 3. Run the pipeline
+cd backend
 python pipeline.py --scrape --max-jobs 10000
-
-# 3. Run remaining pipeline steps
 python pipeline.py --clean
 python pipeline.py --extract
 python pipeline.py --cluster
 python pipeline.py --forecast
+cd ..
 
 # 4. Start the app
 npm run dev
@@ -72,7 +78,7 @@ npm run dev
 ## Running the servers separately
 
 ```bash
-npm run dev:api   # FastAPI on http://localhost:8000
+npm run dev:api   # FastAPI on http://localhost:8001
 npm run dev:web   # React on  http://localhost:5173
 ```
 
@@ -109,43 +115,70 @@ python pipeline.py --all      # run all steps in order
 ## Project structure
 
 ```
-├── api/
-│   ├── main.py               # FastAPI app + CORS
-│   ├── data.py               # cached parquet loaders + NLP singleton
-│   └── routers/              # overview, heatmap, clusters, trends, resume
-├── web/
+├── backend/
+│   ├── api/
+│   │   ├── main.py               # FastAPI app + CORS
+│   │   ├── data.py               # cached parquet loaders + NLP singleton
+│   │   └── routers/              # overview, heatmap, clusters, trends, resume
+│   ├── src/
+│   │   ├── scraper/              # adzuna.py, usajobs.py, mock.py
+│   │   ├── nlp/                  # cleaner.py, extractor.py
+│   │   ├── clustering/           # roles.py
+│   │   ├── forecasting/          # demand.py
+│   │   ├── analyzer/             # resume.py, gap.py
+│   │   └── logger.py
+│   ├── data/processed/           # bundled parquet files (for deployment)
+│   ├── tests/                    # 58 pytest unit tests
+│   ├── pipeline.py               # CLI orchestrator
+│   ├── requirements.txt          # Python deps
+│   ├── Dockerfile                # for Railway deployment
+│   └── railway.toml
+├── frontend/
 │   └── src/
-│       ├── components/       # Nav, MetricCard, Badge, SkillTable, EmptyState
-│       ├── pages/            # Overview, SkillHeatmap, RoleClusters, SkillTrends, ResumeAnalyzer
-│       └── lib/api.ts        # typed fetch wrappers
+│       ├── components/           # Nav, MetricCard, Badge, SkillTable, EmptyState
+│       ├── pages/                # Overview, SkillHeatmap, RoleClusters, SkillTrends, ResumeAnalyzer
+│       └── lib/api.ts            # typed fetch wrappers
 ├── data/
-│   ├── raw/                  # scraped JSONL batches (git-ignored)
-│   ├── processed/            # parquet files (git-ignored)
-│   └── skills/               # ESCO taxonomy CSV (optional)
-├── src/
-│   ├── scraper/              # adzuna.py, usajobs.py, mock.py
-│   ├── nlp/                  # cleaner.py, extractor.py
-│   ├── clustering/           # roles.py
-│   ├── forecasting/          # demand.py
-│   ├── analyzer/             # resume.py, gap.py
-│   └── logger.py
-├── tests/                    # 58 pytest unit tests
-├── pipeline.py               # CLI orchestrator
-├── requirements.txt          # Python deps
-└── package.json              # npm dev scripts (concurrently)
+│   ├── raw/                      # scraped JSONL batches (git-ignored)
+│   └── processed/                # local parquet files (git-ignored)
+├── package.json                  # npm dev scripts (concurrently)
+└── README.md
 ```
+
+---
+
+## Deployment
+
+### Backend → Railway
+
+1. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub repo
+2. Set **Root Directory** to `backend`
+3. Railway auto-detects the `Dockerfile`
+4. Add environment variables:
+   - `ALLOWED_ORIGIN` = your Vercel frontend URL (e.g. `https://your-app.vercel.app`)
+   - `ADZUNA_APP_ID` and `ADZUNA_API_KEY` (optional — only needed if re-running the scraper)
+
+### Frontend → Vercel
+
+1. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
+2. Set **Root Directory** to `frontend`
+3. Framework preset: **Vite**
+4. Add environment variable:
+   - `VITE_API_URL` = your Railway backend URL (e.g. `https://your-backend.up.railway.app`)
+5. Deploy
 
 ---
 
 ## Environment variables
 
-Copy `.env.example` to `.env` and fill in values as needed:
+Copy `backend/.env.example` to `.env` and fill in values as needed:
 
 ```
 ADZUNA_APP_ID=your_app_id
 ADZUNA_API_KEY=your_api_key
 USAJOBS_API_KEY=your_usajobs_key   # optional — public jobs work without it
 LOG_LEVEL=INFO                     # DEBUG for verbose output
+ALLOWED_ORIGIN=https://your-app.vercel.app  # production CORS origin
 ```
 
 ---
@@ -153,6 +186,7 @@ LOG_LEVEL=INFO                     # DEBUG for verbose output
 ## Running tests
 
 ```bash
+cd backend
 pytest tests/ -v
 # 58 tests across cleaner, extractor, forecasting, gap analyzer, resume parser
 ```
@@ -165,5 +199,5 @@ pytest tests/ -v
 - **Adzuna free tier**: 250 calls/day × 50 results/page, capped at 50 pages per query — enough to collect thousands of jobs in a single run.
 - **Embedding cache**: sentence-transformer embeddings are cached to `data/processed/embeddings.npy` (invalidated automatically when data changes) so re-clustering skips the expensive encoding step.
 - **Forecasting**: uses Holt-Winters additive-trend exponential smoothing (`statsmodels`). No Stan/C++ compiler required.
-- **Resume analyzer**: works with text-based PDFs and DOCX files. Scanned/image PDFs require conversion to DOCX first.
+- **Resume analyzer**: works with text-based PDFs and DOCX files. Image-based PDFs are handled via EasyOCR automatically.
 - **Bundle size**: plotly.js is large (~1.5 MB gzipped). Consider lazy-loading chart pages if initial load time matters.
