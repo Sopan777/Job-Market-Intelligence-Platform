@@ -74,6 +74,7 @@ export const api = {
     return get<HeatmapData>(`/heatmap${qs}`)
   },
   clusters: () => get<ClustersData>('/clusters'),
+  trends: () => get<TrendsData>('/trends'),
   roles: () => get<{ roles: string[] }>('/roles'),
   resume: async (file: File, role: string): Promise<ResumeReport> => {
     const form = new FormData()
